@@ -3,6 +3,7 @@
 #include <cmath>
 #include <math.h>
 #include <random>
+#include <iostream>
 
 /////////////////////////// Utils ///////////////////////////////
 inline float radians(const float deg) { return deg * M_PI / 180; }
@@ -31,6 +32,17 @@ struct vec2
 
     vec2();
     vec2(const float x, const float y);
+
+    // Operators
+    float &operator[](const int i);
+    const float &operator[](const int i) const;
+
+    vec2 operator/(const float &rhs) const;
+
+    vec2 operator*(const vec2 &rhs) const;
+
+    bool operator==(const vec2 &rhs) const;
+    bool operator!=(const vec2 &rhs) const;
 };
 
 struct vec3
@@ -110,7 +122,7 @@ struct vec4
     vec4 operator*(const vec4 &rhs) const;
 
     vec4 operator+(const vec4 &rhs) const;
-    
+
     bool operator==(const vec4 &rhs) const;
 
     float &operator[](const int i);
@@ -128,10 +140,105 @@ struct vec4
     }
 };
 
+struct mat2
+{
+    mat2() = default;
+    mat2(const float diagonal);
+    mat2(const vec2 col0, const vec2 col1);
+    mat2(const float m00, const float m01, const float m10, const float m11);
+
+    float determinant() const;
+
+    mat2 adjugate() const;
+    mat2 inverse() const;
+
+    // Operators
+    vec2 &operator[](const int i);
+    const vec2 &operator[](const int i) const;
+
+    mat2 operator/(const float rhs) const;
+
+    mat2 operator*(const mat2 &rhs) const;
+
+    bool operator==(const mat2 &rhs) const;
+
+    // Friend operators
+    friend std::ostream &operator<<(std::ostream &os, const mat2 &m2);
+
+    vec2 col0;
+    vec2 col1;
+};
+
+struct mat3
+{
+    mat3(const vec3 col0, const vec3 col1, const vec3 col2);
+    mat3(const float m00, const float m01, const float m02, const float m10, const float m11, const float m12,
+         const float m20, const float m21, const float m22);
+
+    float determinant() const;
+
+    // Operators
+    vec3 &operator[](const int i);
+    const vec3 &operator[](const int i) const;
+
+    // Friend operators
+    friend std::ostream &operator<<(std::ostream &os, const mat3 &m3);
+
+    vec3 col0;
+    vec3 col1;
+    vec3 col2;
+};
+
+struct mat4
+{
+    mat4() = default;
+    mat4(const float diagonal);
+    mat4(const mat4 &rhs);
+
+    mat4(const float m00, const float m01, const float m02, const float m03, const float m10, const float m11,
+         const float m12, const float m13, const float m20, const float m21, const float m22, const float m23,
+         const float m30, const float m31, const float m32, const float m33);
+
+    float determinant() const;
+
+    mat4 transpose() const;
+    mat4 adjugate() const;
+    mat4 inverse() const;
+
+    // Operators
+    vec4 &operator[](const int i);
+    const vec4 &operator[](const int i) const;
+
+    bool operator==(const mat4 &rhs) const;
+
+    mat4 operator*(const mat4 &rhs);
+
+    mat4 operator/(const float rhs) const;
+
+    // Friend operators
+    friend std::ostream &operator<<(std::ostream &os, const mat4 &m4);
+
+    vec4 col0;
+    vec4 col1;
+    vec4 col2;
+    vec4 col3;
+};
+
 /////////////////////////// vec2 ////////////////////////////////
 inline vec2::vec2() : x(0), y(0) {}
 
 inline vec2::vec2(const float x, const float y) : x(x), y(y) {}
+
+inline float &vec2::operator[](const int i) { return (&x)[i]; }
+
+inline const float &vec2::operator[](const int i) const { return (&x)[i]; }
+
+inline vec2 vec2::operator/(const float &rhs) const { return vec2{x / rhs, y / rhs}; }
+
+inline vec2 vec2::operator*(const vec2 &rhs) const { return vec2{x * rhs.x, y * rhs.y}; }
+
+inline bool vec2::operator==(const vec2 &rhs) const { return x == rhs.x && y == rhs.y; }
+inline bool vec2::operator!=(const vec2 &rhs) const { return x != rhs.x || y != rhs.y; }
 /////////////////////////////////////////////////////////////////
 
 /////////////////////////// vec3 ////////////////////////////////
@@ -212,74 +319,420 @@ inline vec4 vec4::operator*(const vec4 &rhs) const { return vec4{x * rhs.x, y * 
 
 inline vec4 vec4::operator+(const vec4 &rhs) const { return vec4{x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w}; }
 
-inline bool vec4::operator==(const vec4 &rhs) const 
-{
-    return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w;
-}
+inline bool vec4::operator==(const vec4 &rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
 
 inline float vec4::dot(const vec4 &rhs) const { return x * rhs.x + y * rhs.y + z * rhs.z + w * rhs.w; }
-////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
 
-struct mat4
+/////////////////////////// mat2 ////////////////////////////////
+
+inline mat2::mat2(const float diagonal): col0(diagonal, 0), col1(0, diagonal) {}
+
+inline mat2::mat2(const vec2 col0, const vec2 col1) : col0(col0), col1(col1) {}
+
+inline mat2::mat2(const float m00, const float m01, const float m10, const float m11) : col0(m00, m01), col1(m10, m11)
 {
-    mat4() = default;
-    mat4(const float diagonal)
-        : col0{diagonal, 0.0f, 0.0f, 0.0f},
-          col1{0.0f, diagonal, 0.0f, 0.0f},
-          col2{0.0f, 0.0f, diagonal, 0.0f},
-          col3{0.0f, 0.0f, 0.0f, diagonal}
+}
+
+inline float mat2::determinant() const { return col0[0] * col1[1] - col0[1] * col1[0]; }
+
+inline mat2 mat2::adjugate() const
+{
+    return mat2{
+        (*this)[1][1], -(*this)[0][1],  // Col 0
+        -(*this)[1][0], (*this)[0][0],  // Col 1
+    };
+}
+
+inline mat2 mat2::inverse() const { return adjugate() / determinant(); }
+
+// Write matrix in row major on the ostream.
+inline std::ostream &operator<<(std::ostream &os, const mat2 &m2)
+{
+    os << "[" << m2[0][0] << " " << m2[1][0] << "]\n";
+    os << "[" << m2[0][1] << " " << m2[1][1] << "]\n";
+    return os;
+}
+
+inline vec2 &mat2::operator[](const int i) { return (&col0)[i]; }
+inline const vec2 &mat2::operator[](const int i) const { return (&col0)[i]; }
+
+inline mat2 mat2::operator/(const float rhs) const
+{
+    return mat2{ return mat2{
+        // Column 0
+        (*this)[0][0] * rhs[0][0] + (*this)[0][1] * rhs[1][0],
+        (*this)[1][0] * rhs[0][0] + (*this)[1][1] * rhs[1][0],
+        // Column 1
+        (*this)[0][0] * rhs[0][1] + (*this)[0][1] * rhs[1][1],
+        (*this)[1][0] * rhs[0][1] + (*this)[1][1] * rhs[1][1]
+    };
+        (*this)[0] / rhs,  // Col 0
+        (*this)[1] / rhs,  // Col 1
+    };
+}
+
+
+inline mat2 mat2::operator*(const mat2 &rhs) const
+{
+    return mat2{
+        (*this)[0][0] * rhs[0][0] + (*this)[1][0] * rhs[0][1],  (*this)[0][1] * rhs[0][0] + (*this)[1][1] * rhs[0][1], // Col 0
+        (*this)[0][0] * rhs[1][0] + (*this)[1][0] * rhs[1][1],  (*this)[0][1] * rhs[1][0] + (*this)[1][1] * rhs[1][1], // Col 1
+    };
+}
+
+inline bool mat2::operator==(const mat2 &rhs) const
+{
+    if ((*this)[0] != rhs[0])
     {
+        return false;
     }
-    mat4(const mat4 &r) : col0(r.col0), col1(r.col1), col2(r.col2), col3(r.col3) {}
-    mat4(const float v00, const float v01);
-
-    mat4(const float m00, const float m01, const float m02, const float m03, const float m10, const float m11,
-         const float m12, const float m13, const float m20, const float m21, const float m22, const float m23,
-         const float m30, const float m31, const float m32, const float m33)
-        : col0(m00, m01, m02, m03), col1(m10, m11, m12, m13), col2(m20, m21, m22, m23), col3(m30, m31, m32, m33)
+    if ((*this)[1] != rhs[1])
     {
+        return false;
     }
+    return true;
+}
+/////////////////////////////////////////////////////////////////
 
-    vec4 &operator[](const int i) { return (&col0)[i]; }
-    const vec4 &operator[](const int i) const { return (&col0)[i]; }
+/////////////////////////// mat3 ////////////////////////////////
+inline mat3::mat3(const vec3 col0, const vec3 col1, const vec3 col2) : col0(col0), col1(col1), col2(col2) {}
 
-    mat4 operator*(const mat4 &r)
+inline mat3::mat3(const float m00, const float m01, const float m02, const float m10, const float m11, const float m12,
+                  const float m20, const float m21, const float m22)
+    : col0(m00, m01, m02), col1(m10, m11, m12), col2(m20, m21, m22)
+{
+}
+
+inline float mat3::determinant() const
+{
+    const mat2 a{
+        (*this)[1][1], (*this)[1][2],  // col 0
+        (*this)[2][1], (*this)[2][2],  // col 1
+    };
+
+    const mat2 b{
+        (*this)[0][1], (*this)[0][2],  // col 0
+        (*this)[2][1], (*this)[2][2],  // col 1
+    };
+
+    const mat2 c{
+        (*this)[0][1], (*this)[0][2],  // col 0
+        (*this)[1][1], (*this)[1][2],  // col 1
+    };
+
+    const auto aPivot = (*this)[0][0];
+    const auto bPivot = (*this)[1][0];
+    const auto cPivot = (*this)[2][0];
+
+    return aPivot * a.determinant() - bPivot * b.determinant() + cPivot * c.determinant();
+}
+
+inline vec3 &mat3::operator[](const int i) { return (&col0)[i]; }
+inline const vec3 &mat3::operator[](const int i) const { return (&col0)[i]; }
+
+// Write matrix in row major on the ostream.
+inline std::ostream &operator<<(std::ostream &os, const mat3 &m3)
+{
+    os << "[" << m3[0][0] << " " << m3[1][0] << " " << m3[2][0] << "]\n";
+    os << "[" << m3[0][1] << " " << m3[1][1] << " " << m3[2][1] << "]\n";
+    os << "[" << m3[0][2] << " " << m3[1][2] << " " << m3[2][2] << "]\n";
+    return os;
+}
+/////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////
+
+/////////////////////////// mat4 ////////////////////////////////
+inline mat4::mat4(const float diagonal)
+    : col0{diagonal, 0.0f, 0.0f, 0.0f},
+      col1{0.0f, diagonal, 0.0f, 0.0f},
+      col2{0.0f, 0.0f, diagonal, 0.0f},
+      col3{0.0f, 0.0f, 0.0f, diagonal}
+{
+}
+inline mat4::mat4(const mat4 &r) : col0(r.col0), col1(r.col1), col2(r.col2), col3(r.col3) {}
+
+inline mat4::mat4(const float m00, const float m01, const float m02, const float m03, const float m10, const float m11,
+                  const float m12, const float m13, const float m20, const float m21, const float m22, const float m23,
+                  const float m30, const float m31, const float m32, const float m33)
+    : col0(m00, m01, m02, m03), col1(m10, m11, m12, m13), col2(m20, m21, m22, m23), col3(m30, m31, m32, m33)
+{
+}
+
+inline float mat4::determinant() const
+{
+    const mat3 a{
+        (*this)[1][1], (*this)[1][2], (*this)[1][3],  // col 0
+        (*this)[2][1], (*this)[2][2], (*this)[2][3],  // col 1
+        (*this)[3][1], (*this)[3][2], (*this)[3][3],  // col 2
+    };
+
+    const mat3 b{
+        (*this)[0][1], (*this)[0][2], (*this)[0][3],  // col 0
+        (*this)[2][1], (*this)[2][2], (*this)[2][3],  // col 1
+        (*this)[3][1], (*this)[3][2], (*this)[3][3],  // col 2
+    };
+
+    const mat3 c{
+        (*this)[0][1], (*this)[0][2], (*this)[0][3],  // col 0
+        (*this)[1][1], (*this)[1][2], (*this)[1][3],  // col 1
+        (*this)[3][1], (*this)[3][2], (*this)[3][3],  // col 2
+    };
+
+    const mat3 d{
+        (*this)[0][1], (*this)[0][2], (*this)[0][3],  // col 0
+        (*this)[1][1], (*this)[1][2], (*this)[1][3],  // col 1
+        (*this)[2][1], (*this)[2][2], (*this)[2][3],  // col 2
+    };
+
+    const auto aPivot = (*this)[0][0];
+    const auto bPivot = (*this)[1][0];
+    const auto cPivot = (*this)[2][0];
+    const auto dPivot = (*this)[3][0];
+
+    return aPivot * a.determinant() - bPivot * b.determinant() + cPivot * c.determinant() - dPivot * d.determinant();
+
+    return 0.0f;
+}
+
+inline mat4 mat4::transpose() const
+{
+    mat4 t;
+
+    t[0][0] = (*this)[0][0];
+    t[1][0] = (*this)[0][1];
+    t[2][0] = (*this)[0][2];
+    t[3][0] = (*this)[0][3];
+
+    t[0][1] = (*this)[1][0];
+    t[1][1] = (*this)[1][1];
+    t[2][1] = (*this)[1][2];
+    t[3][1] = (*this)[1][3];
+
+    t[0][2] = (*this)[2][0];
+    t[1][2] = (*this)[2][1];
+    t[2][2] = (*this)[2][2];
+    t[3][2] = (*this)[2][3];
+
+    t[0][3] = (*this)[3][0];
+    t[1][3] = (*this)[3][1];
+    t[2][3] = (*this)[3][2];
+    t[3][3] = (*this)[3][3];
+
+    return t;
+}
+
+inline mat4 mat4::adjugate() const
+{
+    mat4 c;
+
+    // Col0
+    c[0][0] =
+        mat3{
+            (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col0
+            (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col1
+            (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2
+        }
+            .determinant();
+    c[0][1] =
+        -mat3{
+            (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col0
+            (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col1
+            (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2
+        }
+             .determinant();
+    c[0][2] =
+        mat3{
+            (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col0
+            (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col1
+            (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2
+        }
+            .determinant();
+    c[0][3] =
+        mat3{
+            (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col0
+            (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col1
+            (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2
+        }
+            .determinant() *
+        -1;
+
+    // Col 1
+    c[1][0] =
+        mat3{
+            (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0
+            (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col1
+            (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2
+        }
+            .determinant() *
+        -1;
+    c[1][1] =
+        mat3{
+            (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0
+            (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col1
+            (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2
+        }
+            .determinant();
+    c[1][2] =
+        mat3{
+            (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0
+            (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col1
+            (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2
+        }
+            .determinant() *
+        -1;
+    c[1][3] =
+        mat3{
+            (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0
+            (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col1
+            (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2
+        }
+            .determinant();
+
+    // Col 2
+    c[2][0] =
+        mat3{
+            (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0
+            (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col1
+            (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2
+        }
+            .determinant();
+    c[2][1] =
+        mat3{
+            (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0
+            (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col1
+            (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2
+        }
+            .determinant() *
+        -1;
+    c[2][2] =
+        mat3{
+            (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0
+            (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col1
+            (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2
+        }
+            .determinant();
+    c[2][3] =
+        mat3{
+            (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0
+            (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col1
+            (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2
+        }
+            .determinant() *
+        -1;
+
+    // Col 3
+    c[3][0] =
+        mat3{
+            (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0
+            (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col1
+            (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col2
+        }
+            .determinant() *
+        -1;
+    c[3][1] =
+        mat3{
+            (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0
+            (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col1
+            (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col2
+        }
+            .determinant();
+    c[3][2] =
+        mat3{
+            (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0
+            (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col1
+            (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col2
+        }
+            .determinant() *
+        -1;
+    c[3][3] =
+        mat3{
+            (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0
+            (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col1
+            (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col2
+        }
+            .determinant();
+
+    return c;
+}
+
+inline mat4 mat4::inverse() const { return adjugate() / determinant(); }
+
+inline vec4 &mat4::operator[](const int i) { return (&col0)[i]; }
+inline const vec4 &mat4::operator[](const int i) const { return (&col0)[i]; }
+
+inline bool mat4::operator==(const mat4 &rhs) const
+{
+    for (int c = 0; c < 4; c++)
     {
-        mat4 m{};
-
-        const vec4 row0{col0.x, col1.x, col2.x, col3.x};
-        const vec4 row1{col0.y, col1.y, col2.y, col3.y};
-        const vec4 row2{col0.z, col1.z, col2.z, col3.z};
-        const vec4 row3{col0.w, col1.w, col2.w, col3.w};
-
-        m[0][0] = row0.dot(r.col0);
-        m[1][0] = row0.dot(r.col1);
-        m[2][0] = row0.dot(r.col2);
-        m[3][0] = row0.dot(r.col3);
-
-        m[0][1] = row1.dot(r.col0);
-        m[1][1] = row1.dot(r.col1);
-        m[2][1] = row1.dot(r.col2);
-        m[3][1] = row1.dot(r.col3);
-
-        m[0][2] = row2.dot(r.col0);
-        m[1][2] = row2.dot(r.col1);
-        m[2][2] = row2.dot(r.col2);
-        m[3][2] = row2.dot(r.col3);
-
-        m[0][3] = row3.dot(r.col0);
-        m[1][3] = row3.dot(r.col1);
-        m[2][3] = row3.dot(r.col2);
-        m[3][3] = row3.dot(r.col3);
-
-        return m;
+        for (int r = 0; r < 4; r++)
+        {
+            if ((*this)[c][r] != rhs[c][r])
+            {
+                return false;
+            }
+        }
     }
+    return true;
+}
 
-    vec4 col0;
-    vec4 col1;
-    vec4 col2;
-    vec4 col3;
-};
+inline mat4 mat4::operator*(const mat4 &r)
+{
+    mat4 m{};
+
+    const vec4 row0{col0.x, col1.x, col2.x, col3.x};
+    const vec4 row1{col0.y, col1.y, col2.y, col3.y};
+    const vec4 row2{col0.z, col1.z, col2.z, col3.z};
+    const vec4 row3{col0.w, col1.w, col2.w, col3.w};
+
+    m[0][0] = row0.dot(r.col0);
+    m[1][0] = row0.dot(r.col1);
+    m[2][0] = row0.dot(r.col2);
+    m[3][0] = row0.dot(r.col3);
+
+    m[0][1] = row1.dot(r.col0);
+    m[1][1] = row1.dot(r.col1);
+    m[2][1] = row1.dot(r.col2);
+    m[3][1] = row1.dot(r.col3);
+
+    m[0][2] = row2.dot(r.col0);
+    m[1][2] = row2.dot(r.col1);
+    m[2][2] = row2.dot(r.col2);
+    m[3][2] = row2.dot(r.col3);
+
+    m[0][3] = row3.dot(r.col0);
+    m[1][3] = row3.dot(r.col1);
+    m[2][3] = row3.dot(r.col2);
+    m[3][3] = row3.dot(r.col3);
+
+    return m;
+}
+
+inline mat4 mat4::operator/(const float rhs) const
+{
+    mat4 m;
+
+    for (int c = 0; c < 4; c++)
+    {
+        for (int r = 0; r < 4; r++)
+        {
+            m[c][r] = (*this)[c][r] / rhs;
+        }
+    }
+    return m;
+}
+
+// Write matrix in row major on the ostream.
+inline std::ostream &operator<<(std::ostream &os, const mat4 &m4)
+{
+    os << "[" << m4[0][0] << " " << m4[1][0] << " " << m4[2][0] << " " << m4[3][0] << "]\n";
+    os << "[" << m4[0][1] << " " << m4[1][1] << " " << m4[2][1] << " " << m4[3][1] << "]\n";
+    os << "[" << m4[0][2] << " " << m4[1][2] << " " << m4[2][2] << " " << m4[3][2] << "]\n";
+    os << "[" << m4[0][3] << " " << m4[1][3] << " " << m4[2][3] << " " << m4[3][3] << "]\n";
+    return os;
+}
+////////////////////////////////////////////////////////////////
 
 inline mat4 translate(const mat4 &m, const vec3 &v)
 {

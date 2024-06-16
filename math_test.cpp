@@ -154,3 +154,185 @@ TEST_SUITE("Transformations")
         }
     }
 }
+
+TEST_SUITE("Mat2")
+{
+    TEST_CASE("Multiplication")
+    {
+        mat2 m1{
+            3, 5,   // Col 0
+            2, -3,  // Col 1
+        };
+        mat2 m2{
+            7, 1,   // Col 0
+            1, -3,  // Col 1
+        };
+        mat2 expected{
+            23, 32,  // Col 0
+            -3, 14   // Col 1
+        };
+        REQUIRE(m1 * m2 == expected);
+    }
+
+    TEST_CASE("Determinant")
+    {
+        const mat2 m{
+            3, 5,   // Col 0
+            -4, 7,  // Col 1
+        };
+        REQUIRE(m.determinant() == 41);
+
+        const mat2 m2{
+            20.3f, 12.4f,  // Col 0
+            -4, -2,        // Col 1
+        };
+        REQUIRE(m2.determinant() == doctest::Approx(9.0f));
+    }
+
+    TEST_CASE("Adjugate")
+    {
+        const mat2 m{
+            3, -7,  // Col 0
+            5, 2,   // Col 1
+        };
+        const mat2 expected{
+            2, 7,   // Col 0
+            -5, 3,  // Col 1
+        };
+        REQUIRE(m.adjugate() == expected);
+    }
+
+    TEST_CASE("Inverse")
+    {
+        const auto d = 41;
+        const mat2 m{
+            3, -7,  // Col 0
+            5, 2,   // Col 1
+        };
+        const mat2 adjugate{
+            2, 7,   // Col 0
+            -5, 3,  // Col 1
+        };
+        REQUIRE(m.adjugate() == adjugate);
+        REQUIRE(m.determinant() == d);
+
+        const mat2 expected{
+            adjugate[0][0] / d, adjugate[0][1] / d,  // Col 0
+            adjugate[1][0] / d, adjugate[1][1] / d,  // Col 1
+        };
+        REQUIRE(m.inverse() == expected);
+        REQUIRE(m.inverse() * m == mat2{1.0f});
+    }
+}
+
+TEST_SUITE("Mat3")
+{
+    TEST_CASE("Determinant")
+    {
+        mat3 m{
+            5,  4,  1,   // Col 0
+            7,  -3, 7,   // Col 1
+            -8, 6,  -9,  // Col 2
+        };
+        REQUIRE(m.determinant() == -29.0f);
+
+        mat3 m2{
+            2,  5, -8,  // Col 0
+            4,  7, 1,   // Col 1
+            -3, 6, 9,   // Col 2
+        };
+        REQUIRE(m2.determinant() == -441.0f);
+    }
+}
+
+TEST_SUITE("Mat4")
+{
+    TEST_CASE("Transpose")
+    {
+        mat4 m{
+            2,  4, 3, 3,  // Col 0
+            3,  2, 9, 7,  // Col 1
+            10, 2, 2, 7,  // Col 2
+            8,  1, 3, 1,  // Col 3
+        };
+        mat4 expected{
+            2, 3, 10, 8,  // Col 0
+            4, 2, 2,  1,  // Col 1
+            3, 9, 2,  3,  // Col 2
+            3, 7, 7,  1,  // Col 3
+        };
+        REQUIRE(expected == m.transpose());
+        REQUIRE(m.transpose().transpose() == m);
+    }
+
+    TEST_CASE("Adjugate")
+    {
+        mat4 m{
+            -2, 4, -3, 2,  // Col 0
+            5,  1, 5,  2,  // Col 1
+            1,  0, 5,  3,  // Col 2
+            5,  3, 1,  3,  // Col 3
+        };
+        mat4 expected{
+            27,  -72,  -27, 36,   // Col 0
+            9,   -108, -72, 117,  // Col 1
+            15,  51,   6,   -78,  // Col 2
+            -39, 69,   60,  -87,  // Col 3
+        };
+        REQUIRE(expected == m.adjugate());
+
+        mat4 m2{
+            3,  -8, 3, 7,   // Col 0
+            -2, 7,  4, -2,  // Col 1
+            9,  7,  8, 2,   // Col 2
+            2,  2,  0, 6,   // Col 3
+        };
+
+        mat4 expected2{
+            216,  264,  -434, -160,  // Col 0
+            610,  -118, -542, -164,  // Col 1
+            -386, -40,  -52,  142,   // Col 2
+            80,   -334, 343,  -563,  // Col 3
+        };
+        REQUIRE(expected == m.adjugate());
+    }
+
+    TEST_CASE("Determinant")
+    {
+        mat4 m{
+            3,  1,  3,  -6,  // Col 0
+            -7, -4, 2,  6,   // Col 1
+            8,  -3, 5,  2,   // Col 2
+            1,  8,  -5, 1,   // Col 3
+        };
+        REQUIRE(m.determinant() == 2322);
+    }
+
+    /* TEST_CASE("Inverse") */
+    /* { */
+    /*     mat4 m{ */
+    /*         3,  -8, 3, 7,   // Col 0 */
+    /*         -2, 7,  4, -2,  // Col 1 */
+    /*         9,  7,  8, 2,   // Col 2 */
+    /*         2,  2,  0, 6,   // Col 3 */
+    /*     }; */
+
+    /*     mat4 expected{ */
+    /*         -0.0555f, -0.1569f, 0.0993f,    -0.0205f,  // Col 0 */
+    /*         -0.0679f, 0.0303f,  0.0102f,    0.0859f,   // Col 1 */
+    /*         0.1116f,  0.1394f,  0.0133814f, -0.0882f,  // Col 2 */
+    /*         0.0411f,  0.04220f, -0.03654f,  0.1448f,   // Col 3 */
+    /*     }; */
+
+    /*     const auto i = m.inverse(); */
+
+    /*     for (int c = 0; c < 4; c++) */
+    /*     { */
+    /*         for (int r = 0; r < 4; r++) */
+    /*         { */
+    /*             REQUIRE(expected[c][r] == doctest::Approx(i[c][r]).epsilon(.05)); */
+    /*         } */
+    /*     } */
+    /* } */
+}
+
