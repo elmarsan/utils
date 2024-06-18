@@ -37,7 +37,7 @@ struct vec2
     float &operator[](const int i);
     const float &operator[](const int i) const;
 
-    vec2 operator/(const float &rhs) const;
+    vec2 operator/(const float rhs) const;
 
     vec2 operator*(const vec2 &rhs) const;
 
@@ -84,11 +84,15 @@ struct vec3
 
     vec3 operator/(const float &rhs) const;
 
+    bool operator!=(const vec3 &rhs) const;
+    bool operator==(const vec3 &rhs) const;
+
     float &operator[](const int i);
     const float &operator[](const int i) const;
 
     // Friend operators
     friend vec3 operator*(const float &lhs, const vec3 &rhs) { return vec3{rhs.x * lhs, rhs.y * lhs, rhs.z * lhs}; }
+    friend std::ostream &operator<<(std::ostream &os, const vec3 &v3);
 };
 
 struct vec4
@@ -123,6 +127,8 @@ struct vec4
 
     vec4 operator+(const vec4 &rhs) const;
 
+    vec4 operator/(const float rhs) const;
+
     bool operator==(const vec4 &rhs) const;
 
     float &operator[](const int i);
@@ -149,8 +155,14 @@ struct mat2
 
     float determinant() const;
 
+    mat2 transpose() const;
+    mat2 minor() const;
+    mat2 cofactor() const;
     mat2 adjugate() const;
     mat2 inverse() const;
+
+    vec2 row0() const;
+    vec2 row1() const;
 
     // Operators
     vec2 &operator[](const int i);
@@ -159,6 +171,7 @@ struct mat2
     mat2 operator/(const float rhs) const;
 
     mat2 operator*(const mat2 &rhs) const;
+    void operator*=(const float rhs);
 
     bool operator==(const mat2 &rhs) const;
 
@@ -171,15 +184,34 @@ struct mat2
 
 struct mat3
 {
+    mat3() = default;
+    mat3(const float diagonal);
     mat3(const vec3 col0, const vec3 col1, const vec3 col2);
     mat3(const float m00, const float m01, const float m02, const float m10, const float m11, const float m12,
          const float m20, const float m21, const float m22);
 
     float determinant() const;
 
+    mat3 transpose() const;
+    mat3 minor() const;
+    mat3 cofactor() const;
+    mat3 adjugate() const;
+    mat3 inverse() const;
+
+    vec3 row0() const;
+    vec3 row1() const;
+    vec3 row2() const;
+
     // Operators
     vec3 &operator[](const int i);
     const vec3 &operator[](const int i) const;
+
+    mat3 operator/(const float rhs) const;
+
+    mat3 operator*(const float rhs) const;
+    mat3 operator*(const mat3 &rhs) const;
+
+    bool operator==(const mat3 &rhs) const;
 
     // Friend operators
     friend std::ostream &operator<<(std::ostream &os, const mat3 &m3);
@@ -201,9 +233,9 @@ struct mat4
 
     float determinant() const;
 
-    mat4 transpose() const;
-    mat4 adjugate() const;
-    mat4 inverse() const;
+    /* mat4 transpose() const; */
+    /* mat4 adjugate() const; */
+    /* mat4 inverse() const; */
 
     // Operators
     vec4 &operator[](const int i);
@@ -233,7 +265,7 @@ inline float &vec2::operator[](const int i) { return (&x)[i]; }
 
 inline const float &vec2::operator[](const int i) const { return (&x)[i]; }
 
-inline vec2 vec2::operator/(const float &rhs) const { return vec2{x / rhs, y / rhs}; }
+inline vec2 vec2::operator/(const float rhs) const { return vec2{x / rhs, y / rhs}; }
 
 inline vec2 vec2::operator*(const vec2 &rhs) const { return vec2{x * rhs.x, y * rhs.y}; }
 
@@ -301,9 +333,19 @@ inline void vec3::operator+=(const vec3 &rhs)
 
 inline vec3 vec3::operator/(const float &rhs) const { return vec3{x / rhs, y / rhs, z / rhs}; }
 
+inline bool vec3::operator!=(const vec3 &rhs) const { return x != rhs.x || y != rhs.y || z != rhs.z; }
+
+inline bool vec3::operator==(const vec3 &rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z; }
+
 inline float &vec3::operator[](const int i) { return (&x)[i]; }
 
 inline const float &vec3::operator[](const int i) const { return (&x)[i]; }
+
+inline std::ostream &operator<<(std::ostream &os, const vec3 &v3)
+{
+    os << "[ " << v3.x << " " << v3.y << " " << v3.z << " ]";
+    return os;
+}
 ////////////////////////////////////////////////////////////////
 
 /////////////////////////// vec4 ////////////////////////////////
@@ -319,6 +361,8 @@ inline vec4 vec4::operator*(const vec4 &rhs) const { return vec4{x * rhs.x, y * 
 
 inline vec4 vec4::operator+(const vec4 &rhs) const { return vec4{x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w}; }
 
+inline vec4 vec4::operator/(const float rhs) const { return vec4{x / rhs, y / rhs, z / rhs, w / rhs}; }
+
 inline bool vec4::operator==(const vec4 &rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w; }
 
 inline float vec4::dot(const vec4 &rhs) const { return x * rhs.x + y * rhs.y + z * rhs.z + w * rhs.w; }
@@ -326,7 +370,7 @@ inline float vec4::dot(const vec4 &rhs) const { return x * rhs.x + y * rhs.y + z
 
 /////////////////////////// mat2 ////////////////////////////////
 
-inline mat2::mat2(const float diagonal): col0(diagonal, 0), col1(0, diagonal) {}
+inline mat2::mat2(const float diagonal) : col0(diagonal, 0), col1(0, diagonal) {}
 
 inline mat2::mat2(const vec2 col0, const vec2 col1) : col0(col0), col1(col1) {}
 
@@ -336,15 +380,37 @@ inline mat2::mat2(const float m00, const float m01, const float m10, const float
 
 inline float mat2::determinant() const { return col0[0] * col1[1] - col0[1] * col1[0]; }
 
-inline mat2 mat2::adjugate() const
+inline mat2 mat2::transpose() const
+{
+    const auto r0 = row0();
+    const auto r1 = row1();
+
+    return mat2{r0, r1};
+}
+
+inline mat2 mat2::minor() const
 {
     return mat2{
-        (*this)[1][1], -(*this)[0][1],  // Col 0
-        -(*this)[1][0], (*this)[0][0],  // Col 1
+        (*this)[1][1], (*this)[1][0],  // Col 0
+        (*this)[0][1], (*this)[0][0],  // Col 1
     };
 }
 
+inline mat2 mat2::cofactor() const
+{
+    mat2 m = minor();
+    m[0][1] *= -1;
+    m[1][0] *= -1;
+    return m;
+}
+
+inline mat2 mat2::adjugate() const { return cofactor().transpose(); }
+
 inline mat2 mat2::inverse() const { return adjugate() / determinant(); }
+
+inline vec2 mat2::row0() const { return vec2{(*this)[0][0], (*this)[1][0]}; }
+
+inline vec2 mat2::row1() const { return vec2{(*this)[0][1], (*this)[1][1]}; }
 
 // Write matrix in row major on the ostream.
 inline std::ostream &operator<<(std::ostream &os, const mat2 &m2)
@@ -359,43 +425,39 @@ inline const vec2 &mat2::operator[](const int i) const { return (&col0)[i]; }
 
 inline mat2 mat2::operator/(const float rhs) const
 {
-    return mat2{ return mat2{
-        // Column 0
-        (*this)[0][0] * rhs[0][0] + (*this)[0][1] * rhs[1][0],
-        (*this)[1][0] * rhs[0][0] + (*this)[1][1] * rhs[1][0],
-        // Column 1
-        (*this)[0][0] * rhs[0][1] + (*this)[0][1] * rhs[1][1],
-        (*this)[1][0] * rhs[0][1] + (*this)[1][1] * rhs[1][1]
-    };
+    return mat2{
         (*this)[0] / rhs,  // Col 0
         (*this)[1] / rhs,  // Col 1
     };
 }
 
-
 inline mat2 mat2::operator*(const mat2 &rhs) const
 {
     return mat2{
-        (*this)[0][0] * rhs[0][0] + (*this)[1][0] * rhs[0][1],  (*this)[0][1] * rhs[0][0] + (*this)[1][1] * rhs[0][1], // Col 0
-        (*this)[0][0] * rhs[1][0] + (*this)[1][0] * rhs[1][1],  (*this)[0][1] * rhs[1][0] + (*this)[1][1] * rhs[1][1], // Col 1
+        (*this)[0][0] * rhs[0][0] + (*this)[1][0] * rhs[0][1],
+        (*this)[0][1] * rhs[0][0] + (*this)[1][1] * rhs[0][1],  // Col 0
+        (*this)[0][0] * rhs[1][0] + (*this)[1][0] * rhs[1][1],
+        (*this)[0][1] * rhs[1][0] + (*this)[1][1] * rhs[1][1],  // Col 1
     };
 }
 
-inline bool mat2::operator==(const mat2 &rhs) const
+inline void mat2::operator*=(const float rhs)
 {
-    if ((*this)[0] != rhs[0])
-    {
-        return false;
-    }
-    if ((*this)[1] != rhs[1])
-    {
-        return false;
-    }
-    return true;
+    (*this)[0][0] *= rhs;
+    (*this)[0][1] *= rhs;
+    (*this)[1][0] *= rhs;
+    (*this)[1][1] *= rhs;
 }
+
+inline bool mat2::operator==(const mat2 &rhs) const { return (*this)[0] == rhs[0] && (*this)[1] == rhs[1]; }
 /////////////////////////////////////////////////////////////////
 
 /////////////////////////// mat3 ////////////////////////////////
+inline mat3::mat3(const float diagonal)
+    : col0{diagonal, 0.0f, 0.0f}, col1{0.0f, diagonal, 0.0f}, col2{0.0f, 0.0f, diagonal}
+{
+}
+
 inline mat3::mat3(const vec3 col0, const vec3 col1, const vec3 col2) : col0(col0), col1(col1), col2(col2) {}
 
 inline mat3::mat3(const float m00, const float m01, const float m02, const float m10, const float m11, const float m12,
@@ -428,15 +490,109 @@ inline float mat3::determinant() const
     return aPivot * a.determinant() - bPivot * b.determinant() + cPivot * c.determinant();
 }
 
+inline mat3 mat3::minor() const
+{
+    mat3 m;
+
+    m[0][0] = mat2{(*this)[1][1], (*this)[1][2], (*this)[2][1], (*this)[2][2]}.determinant();
+    m[0][1] = mat2{(*this)[1][0], (*this)[1][2], (*this)[2][0], (*this)[2][2]}.determinant();
+    m[0][2] = mat2{(*this)[1][0], (*this)[1][1], (*this)[2][0], (*this)[2][1]}.determinant();
+
+    m[1][0] = mat2{(*this)[0][1], (*this)[0][2], (*this)[2][1], (*this)[2][2]}.determinant();
+    m[1][1] = mat2{(*this)[0][0], (*this)[0][2], (*this)[2][0], (*this)[2][2]}.determinant();
+    m[1][2] = mat2{(*this)[0][0], (*this)[0][1], (*this)[2][0], (*this)[2][1]}.determinant();
+
+    m[2][0] = mat2{(*this)[0][1], (*this)[0][2], (*this)[1][1], (*this)[1][2]}.determinant();
+    m[2][1] = mat2{(*this)[0][0], (*this)[0][2], (*this)[1][0], (*this)[1][2]}.determinant();
+    m[2][2] = mat2{(*this)[0][0], (*this)[0][1], (*this)[1][0], (*this)[1][1]}.determinant();
+
+    return m;
+}
+
+inline mat3 mat3::cofactor() const
+{
+    mat3 c = minor();
+    c[0][1] *= -1;
+    c[1][0] *= -1;
+    c[1][2] *= -1;
+    c[2][1] *= -1;
+    return c;
+}
+
+inline mat3 mat3::transpose() const
+{
+    const auto r0 = row0();
+    const auto r1 = row1();
+    const auto r2 = row2();
+
+    return mat3{r0, r1, r2};
+}
+
+inline mat3 mat3::adjugate() const { return cofactor().transpose(); }
+
+inline mat3 mat3::inverse() const { return adjugate() / determinant(); }
+
+inline vec3 mat3::row0() const { return vec3{(*this)[0][0], (*this)[1][0], (*this)[2][0]}; }
+
+inline vec3 mat3::row1() const { return vec3{(*this)[0][1], (*this)[1][1], (*this)[2][1]}; }
+
+inline vec3 mat3::row2() const { return vec3{(*this)[0][2], (*this)[1][2], (*this)[2][2]}; }
+
 inline vec3 &mat3::operator[](const int i) { return (&col0)[i]; }
 inline const vec3 &mat3::operator[](const int i) const { return (&col0)[i]; }
+
+inline mat3 mat3::operator/(const float rhs) const
+{
+    return mat3{
+        (*this)[0] / rhs,
+        (*this)[1] / rhs,
+        (*this)[2] / rhs,
+    };
+}
+
+inline mat3 mat3::operator*(const float rhs) const
+{
+    return mat3{
+        (*this)[0] * rhs,
+        (*this)[1] * rhs,
+        (*this)[2] * rhs,
+    };
+}
+
+inline mat3 mat3::operator*(const mat3 &rhs) const
+{
+    mat3 r;
+
+    const vec3 lhsRow0{(*this)[0][0], (*this)[1][0], (*this)[2][0]};
+    const vec3 lhsRow1{(*this)[0][1], (*this)[1][1], (*this)[2][1]};
+    const vec3 lhsRow2{(*this)[0][2], (*this)[1][2], (*this)[2][2]};
+
+    r[0][0] = lhsRow0.dot(rhs[0]);
+    r[1][0] = lhsRow0.dot(rhs[1]);
+    r[2][0] = lhsRow0.dot(rhs[2]);
+
+    r[0][1] = lhsRow1.dot(rhs[0]);
+    r[1][1] = lhsRow1.dot(rhs[1]);
+    r[2][1] = lhsRow1.dot(rhs[2]);
+
+    r[0][2] = lhsRow2.dot(rhs[0]);
+    r[1][2] = lhsRow2.dot(rhs[1]);
+    r[2][2] = lhsRow2.dot(rhs[2]);
+
+    return r;
+}
+
+inline bool mat3::operator==(const mat3 &rhs) const
+{
+    return (*this)[0] == rhs[0] && (*this)[1] == rhs[1] && (*this)[2] == rhs[2];
+}
 
 // Write matrix in row major on the ostream.
 inline std::ostream &operator<<(std::ostream &os, const mat3 &m3)
 {
-    os << "[" << m3[0][0] << " " << m3[1][0] << " " << m3[2][0] << "]\n";
-    os << "[" << m3[0][1] << " " << m3[1][1] << " " << m3[2][1] << "]\n";
-    os << "[" << m3[0][2] << " " << m3[1][2] << " " << m3[2][2] << "]\n";
+    os << "[ " << m3[0][0] << " " << m3[1][0] << " " << m3[2][0] << " ]\n";
+    os << "[ " << m3[0][1] << " " << m3[1][1] << " " << m3[2][1] << " ]\n";
+    os << "[ " << m3[0][2] << " " << m3[1][2] << " " << m3[2][2] << " ]\n";
     return os;
 }
 /////////////////////////////////////////////////////////////////
@@ -496,215 +652,205 @@ inline float mat4::determinant() const
     return 0.0f;
 }
 
-inline mat4 mat4::transpose() const
-{
-    mat4 t;
+/* inline mat4 mat4::transpose() const */
+/* { */
+/*     mat4 t; */
 
-    t[0][0] = (*this)[0][0];
-    t[1][0] = (*this)[0][1];
-    t[2][0] = (*this)[0][2];
-    t[3][0] = (*this)[0][3];
+/*     t[0][0] = (*this)[0][0]; */
+/*     t[1][0] = (*this)[0][1]; */
+/*     t[2][0] = (*this)[0][2]; */
+/*     t[3][0] = (*this)[0][3]; */
 
-    t[0][1] = (*this)[1][0];
-    t[1][1] = (*this)[1][1];
-    t[2][1] = (*this)[1][2];
-    t[3][1] = (*this)[1][3];
+/*     t[0][1] = (*this)[1][0]; */
+/*     t[1][1] = (*this)[1][1]; */
+/*     t[2][1] = (*this)[1][2]; */
+/*     t[3][1] = (*this)[1][3]; */
 
-    t[0][2] = (*this)[2][0];
-    t[1][2] = (*this)[2][1];
-    t[2][2] = (*this)[2][2];
-    t[3][2] = (*this)[2][3];
+/*     t[0][2] = (*this)[2][0]; */
+/*     t[1][2] = (*this)[2][1]; */
+/*     t[2][2] = (*this)[2][2]; */
+/*     t[3][2] = (*this)[2][3]; */
 
-    t[0][3] = (*this)[3][0];
-    t[1][3] = (*this)[3][1];
-    t[2][3] = (*this)[3][2];
-    t[3][3] = (*this)[3][3];
+/*     t[0][3] = (*this)[3][0]; */
+/*     t[1][3] = (*this)[3][1]; */
+/*     t[2][3] = (*this)[3][2]; */
+/*     t[3][3] = (*this)[3][3]; */
 
-    return t;
-}
+/*     return t; */
+/* } */
 
-inline mat4 mat4::adjugate() const
-{
-    mat4 c;
+/* inline mat4 mat4::adjugate() const */
+/* { */
+/*     mat4 c; */
 
-    // Col0
-    c[0][0] =
-        mat3{
-            (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col0
-            (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col1
-            (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2
-        }
-            .determinant();
-    c[0][1] =
-        -mat3{
-            (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col0
-            (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col1
-            (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2
-        }
-             .determinant();
-    c[0][2] =
-        mat3{
-            (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col0
-            (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col1
-            (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2
-        }
-            .determinant();
-    c[0][3] =
-        mat3{
-            (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col0
-            (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col1
-            (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2
-        }
-            .determinant() *
-        -1;
+/*     // Col0 */
+/*     c[0][0] = */
+/*         mat3{ */
+/*             (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col0 */
+/*             (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col1 */
+/*             (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant(); */
+/*     c[0][1] = */
+/*         -mat3{ */
+/*             (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col0 */
+/*             (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col1 */
+/*             (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2 */
+/*         } */
+/*              .determinant(); */
+/*     c[0][2] = */
+/*         mat3{ */
+/*             (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col0 */
+/*             (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col1 */
+/*             (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant(); */
+/*     c[0][3] = */
+/*         mat3{ */
+/*             (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col0 */
+/*             (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col1 */
+/*             (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2 */
+/*         } */
+/*             .determinant() * */
+/*         -1; */
 
-    // Col 1
-    c[1][0] =
-        mat3{
-            (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0
-            (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col1
-            (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2
-        }
-            .determinant() *
-        -1;
-    c[1][1] =
-        mat3{
-            (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0
-            (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col1
-            (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2
-        }
-            .determinant();
-    c[1][2] =
-        mat3{
-            (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0
-            (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col1
-            (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2
-        }
-            .determinant() *
-        -1;
-    c[1][3] =
-        mat3{
-            (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0
-            (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col1
-            (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2
-        }
-            .determinant();
+/*     // Col 1 */
+/*     c[1][0] = */
+/*         mat3{ */
+/*             (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0 */
+/*             (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col1 */
+/*             (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant() * */
+/*         -1; */
+/*     c[1][1] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0 */
+/*             (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col1 */
+/*             (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant(); */
+/*     c[1][2] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0 */
+/*             (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col1 */
+/*             (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant() * */
+/*         -1; */
+/*     c[1][3] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0 */
+/*             (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col1 */
+/*             (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2 */
+/*         } */
+/*             .determinant(); */
 
-    // Col 2
-    c[2][0] =
-        mat3{
-            (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0
-            (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col1
-            (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2
-        }
-            .determinant();
-    c[2][1] =
-        mat3{
-            (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0
-            (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col1
-            (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2
-        }
-            .determinant() *
-        -1;
-    c[2][2] =
-        mat3{
-            (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0
-            (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col1
-            (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2
-        }
-            .determinant();
-    c[2][3] =
-        mat3{
-            (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0
-            (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col1
-            (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2
-        }
-            .determinant() *
-        -1;
+/*     // Col 2 */
+/*     c[2][0] = */
+/*         mat3{ */
+/*             (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0 */
+/*             (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col1 */
+/*             (*this)[3][1], (*this)[3][2], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant(); */
+/*     c[2][1] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0 */
+/*             (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col1 */
+/*             (*this)[3][0], (*this)[3][2], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant() * */
+/*         -1; */
+/*     c[2][2] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0 */
+/*             (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col1 */
+/*             (*this)[3][0], (*this)[3][1], (*this)[3][3],  // Col2 */
+/*         } */
+/*             .determinant(); */
+/*     c[2][3] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0 */
+/*             (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col1 */
+/*             (*this)[3][0], (*this)[3][1], (*this)[3][2],  // Col2 */
+/*         } */
+/*             .determinant() * */
+/*         -1; */
 
-    // Col 3
-    c[3][0] =
-        mat3{
-            (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0
-            (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col1
-            (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col2
-        }
-            .determinant() *
-        -1;
-    c[3][1] =
-        mat3{
-            (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0
-            (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col1
-            (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col2
-        }
-            .determinant();
-    c[3][2] =
-        mat3{
-            (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0
-            (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col1
-            (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col2
-        }
-            .determinant() *
-        -1;
-    c[3][3] =
-        mat3{
-            (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0
-            (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col1
-            (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col2
-        }
-            .determinant();
+/*     // Col 3 */
+/*     c[3][0] = */
+/*         mat3{ */
+/*             (*this)[0][1], (*this)[0][2], (*this)[0][3],  // Col0 */
+/*             (*this)[1][1], (*this)[1][2], (*this)[1][3],  // Col1 */
+/*             (*this)[2][1], (*this)[2][2], (*this)[2][3],  // Col2 */
+/*         } */
+/*             .determinant() * */
+/*         -1; */
+/*     c[3][1] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][2], (*this)[0][3],  // Col0 */
+/*             (*this)[1][0], (*this)[1][2], (*this)[1][3],  // Col1 */
+/*             (*this)[2][0], (*this)[2][2], (*this)[2][3],  // Col2 */
+/*         } */
+/*             .determinant(); */
+/*     c[3][2] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][1], (*this)[0][3],  // Col0 */
+/*             (*this)[1][0], (*this)[1][1], (*this)[1][3],  // Col1 */
+/*             (*this)[2][0], (*this)[2][1], (*this)[2][3],  // Col2 */
+/*         } */
+/*             .determinant() * */
+/*         -1; */
+/*     c[3][3] = */
+/*         mat3{ */
+/*             (*this)[0][0], (*this)[0][1], (*this)[0][2],  // Col0 */
+/*             (*this)[1][0], (*this)[1][1], (*this)[1][2],  // Col1 */
+/*             (*this)[2][0], (*this)[2][1], (*this)[2][2],  // Col2 */
+/*         } */
+/*             .determinant(); */
 
-    return c;
-}
+/*     return c; */
+/* } */
 
-inline mat4 mat4::inverse() const { return adjugate() / determinant(); }
+/* inline mat4 mat4::inverse() const { return adjugate() / determinant(); } */
 
 inline vec4 &mat4::operator[](const int i) { return (&col0)[i]; }
 inline const vec4 &mat4::operator[](const int i) const { return (&col0)[i]; }
 
 inline bool mat4::operator==(const mat4 &rhs) const
 {
-    for (int c = 0; c < 4; c++)
-    {
-        for (int r = 0; r < 4; r++)
-        {
-            if ((*this)[c][r] != rhs[c][r])
-            {
-                return false;
-            }
-        }
-    }
-    return true;
+    return (*this)[0] == rhs[0] && (*this)[1] == rhs[1] && (*this)[2] == rhs[2] && (*this)[3] == rhs[3];
 }
 
-inline mat4 mat4::operator*(const mat4 &r)
+inline mat4 mat4::operator*(const mat4 &rhs)
 {
     mat4 m{};
 
-    const vec4 row0{col0.x, col1.x, col2.x, col3.x};
-    const vec4 row1{col0.y, col1.y, col2.y, col3.y};
-    const vec4 row2{col0.z, col1.z, col2.z, col3.z};
-    const vec4 row3{col0.w, col1.w, col2.w, col3.w};
+    const vec4 lhsRow0{(*this)[0][0], (*this)[1][0], (*this)[2][0], (*this)[3][0]};
+    const vec4 lhsRow1{(*this)[0][1], (*this)[1][1], (*this)[2][1], (*this)[3][1]};
+    const vec4 lhsRow2{(*this)[0][2], (*this)[1][2], (*this)[2][2], (*this)[3][2]};
+    const vec4 lhsRow4{(*this)[0][3], (*this)[1][3], (*this)[2][3], (*this)[3][3]};
 
-    m[0][0] = row0.dot(r.col0);
-    m[1][0] = row0.dot(r.col1);
-    m[2][0] = row0.dot(r.col2);
-    m[3][0] = row0.dot(r.col3);
+    m[0][0] = lhsRow0.dot(rhs[0]);
+    m[1][0] = lhsRow0.dot(rhs[1]);
+    m[2][0] = lhsRow0.dot(rhs[2]);
+    m[3][0] = lhsRow0.dot(rhs[3]);
 
-    m[0][1] = row1.dot(r.col0);
-    m[1][1] = row1.dot(r.col1);
-    m[2][1] = row1.dot(r.col2);
-    m[3][1] = row1.dot(r.col3);
+    m[0][1] = lhsRow1.dot(rhs[0]);
+    m[1][1] = lhsRow1.dot(rhs[1]);
+    m[2][1] = lhsRow1.dot(rhs[2]);
+    m[3][1] = lhsRow1.dot(rhs[3]);
 
-    m[0][2] = row2.dot(r.col0);
-    m[1][2] = row2.dot(r.col1);
-    m[2][2] = row2.dot(r.col2);
-    m[3][2] = row2.dot(r.col3);
+    m[0][2] = lhsRow2.dot(rhs[0]);
+    m[1][2] = lhsRow2.dot(rhs[1]);
+    m[2][2] = lhsRow2.dot(rhs[2]);
+    m[3][2] = lhsRow2.dot(rhs[3]);
 
-    m[0][3] = row3.dot(r.col0);
-    m[1][3] = row3.dot(r.col1);
-    m[2][3] = row3.dot(r.col2);
-    m[3][3] = row3.dot(r.col3);
+    m[0][3] = lhsRow4.dot(rhs[0]);
+    m[1][3] = lhsRow4.dot(rhs[1]);
+    m[2][3] = lhsRow4.dot(rhs[2]);
+    m[3][3] = lhsRow4.dot(rhs[3]);
 
     return m;
 }
@@ -712,14 +858,10 @@ inline mat4 mat4::operator*(const mat4 &r)
 inline mat4 mat4::operator/(const float rhs) const
 {
     mat4 m;
-
-    for (int c = 0; c < 4; c++)
-    {
-        for (int r = 0; r < 4; r++)
-        {
-            m[c][r] = (*this)[c][r] / rhs;
-        }
-    }
+    m[0] = (*this)[0] / rhs;
+    m[1] = (*this)[1] / rhs;
+    m[2] = (*this)[2] / rhs;
+    m[3] = (*this)[3] / rhs;
     return m;
 }
 
