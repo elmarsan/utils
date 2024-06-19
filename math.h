@@ -18,6 +18,8 @@ inline float randomFloat(const float min, const float max)
 }
 ////////////////////////////////////////////////////////////////
 
+struct mat4;
+
 struct vec2
 {
     union
@@ -189,6 +191,7 @@ struct mat3
     mat3(const vec3 col0, const vec3 col1, const vec3 col2);
     mat3(const float m00, const float m01, const float m02, const float m10, const float m11, const float m12,
          const float m20, const float m21, const float m22);
+    mat3(const mat4 &m4);
 
     float determinant() const;
 
@@ -463,6 +466,11 @@ inline mat3::mat3(const vec3 col0, const vec3 col1, const vec3 col2) : col0(col0
 inline mat3::mat3(const float m00, const float m01, const float m02, const float m10, const float m11, const float m12,
                   const float m20, const float m21, const float m22)
     : col0(m00, m01, m02), col1(m10, m11, m12), col2(m20, m21, m22)
+{
+}
+
+inline mat3::mat3(const mat4 &m4)
+    : col0(m4[0].x, m4[0].y, m4[0].z), col1(m4[1].x, m4[1].y, m4[1].z), col2(m4[2].x, m4[2].y, m4[2].z)
 {
 }
 

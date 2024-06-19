@@ -477,6 +477,22 @@ TEST_SUITE("Mat3")
             }
         }
     }
+
+    TEST_CASE("Construct from Mat4")
+    {
+        const mat4 m4{
+            0, 0, 0, 0,  // Col 0
+            1, 1, 1, 1,  // Col 1
+            2, 2, 2, 2,  // Col 2
+            3, 3, 3, 3,  // Col 3
+        };
+        const mat3 expected{
+            0, 0, 0,  // Col 0
+            1, 1, 1,  // Col 1
+            2, 2, 2,  // Col 2
+        };
+        REQUIRE(mat3{m4} == expected);
+    }
 }
 
 TEST_SUITE("Mat4")
