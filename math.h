@@ -74,9 +74,9 @@ struct vec3
     float magnitude() const;
 
     // Operators
-    vec3 operator*(const float &rhs) const;
+    vec3 operator*(const float rhs) const;
     vec3 operator*(const vec3 &rhs) const;
-    void operator*=(const float &rhs);
+    void operator*=(const float rhs);
     void operator*=(const vec3 &rhs);
 
     vec3 operator-(const vec3 &rhs) const;
@@ -84,7 +84,7 @@ struct vec3
     vec3 operator+(const vec3 &rhs) const;
     void operator+=(const vec3 &rhs);
 
-    vec3 operator/(const float &rhs) const;
+    vec3 operator/(const float rhs) const;
 
     bool operator!=(const vec3 &rhs) const;
     bool operator==(const vec3 &rhs) const;
@@ -93,7 +93,7 @@ struct vec3
     const float &operator[](const int i) const;
 
     // Friend operators
-    friend vec3 operator*(const float &lhs, const vec3 &rhs) { return vec3{rhs.x * lhs, rhs.y * lhs, rhs.z * lhs}; }
+    friend vec3 operator*(const float lhs, const vec3 &rhs) { return vec3{rhs.x * lhs, rhs.y * lhs, rhs.z * lhs}; }
     friend std::ostream &operator<<(std::ostream &os, const vec3 &v3);
 };
 
@@ -298,9 +298,9 @@ inline vec3 vec3::normalize() const { return *this / magnitude(); }
 
 inline float vec3::magnitude() const { return sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2)); }
 
-inline vec3 vec3::operator*(const float &rhs) const { return vec3{x * rhs, y * rhs, z * rhs}; }
+inline vec3 vec3::operator*(const float rhs) const { return vec3{x * rhs, y * rhs, z * rhs}; }
 
-inline void vec3::operator*=(const float &rhs)
+inline void vec3::operator*=(const float rhs)
 {
     x *= rhs;
     y *= rhs;
@@ -334,7 +334,7 @@ inline void vec3::operator+=(const vec3 &rhs)
     z += rhs.z;
 }
 
-inline vec3 vec3::operator/(const float &rhs) const { return vec3{x / rhs, y / rhs, z / rhs}; }
+inline vec3 vec3::operator/(const float rhs) const { return vec3{x / rhs, y / rhs, z / rhs}; }
 
 inline bool vec3::operator!=(const vec3 &rhs) const { return x != rhs.x || y != rhs.y || z != rhs.z; }
 
@@ -893,7 +893,7 @@ inline mat4 translate(const mat4 &m, const vec3 &v)
     return t;
 }
 
-inline mat4 rotate(const mat4 &m, const float &a, const vec3 &v)
+inline mat4 rotate(const mat4 &m, const float a, const vec3 &v)
 {
     const auto c = cos(a);
     const auto s = sin(a);
@@ -926,7 +926,7 @@ inline mat4 rotate(const mat4 &m, const float &a, const vec3 &v)
     return res;
 }
 
-inline mat4 perspective(const float &fov, const float &aspectRatio, const float &zNear, const float &zFar)
+inline mat4 perspective(const float fov, const float aspectRatio, const float zNear, const float zFar)
 {
     mat4 p{0};
 
