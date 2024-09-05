@@ -1,4 +1,5 @@
-#pragma once
+#ifndef H_MATH
+#define H_MATH
 
 #include <cmath>
 #include <math.h>
@@ -977,3 +978,5 @@ inline mat4 scale(const mat4 &m, const vec3 &v)
     s[3] = m[3];
     return s;
 }
+
+#endif
